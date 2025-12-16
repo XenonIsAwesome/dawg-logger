@@ -1,0 +1,15 @@
+# Log rotation configuration for DawgLog application
+
+/var/log/@@APP_NAME@@/@@APP_NAME@@.log {
+    daily           # Rotate logs daily
+    rotate 7        # Keep 7 rotated log files (8 total including current)
+    compress        # Compress rotated log files to save space
+    missingok       # Don't error if the log file doesn't exist
+    notifempty      # Don't rotate empty log files
+    create 0640 syslog adm  # Create new log file with proper permissions (rw-r-----) and ownership
+    sharedscripts   # Run scripts once for all rotated logs (not per log file)
+    postrotate      # Commands to run after rotation completes
+        # Signal rsyslog to reopen log files so it starts writing to the new file
+        systemctl kill -s HUP rsyslog.service >/dev/null 2>&1 || true
+    endscript
+}

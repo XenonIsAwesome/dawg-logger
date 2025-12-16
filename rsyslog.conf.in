@@ -1,0 +1,21 @@
+# imuxsock already loaded globally, no need to load again
+module(load="mmjsonparse")   # Load JSON parser module for parsing structured log data
+
+# === Template ===
+template(name="DawgLog_raw" type="string" string="%rawmsg%\n")
+# Define a template that outputs the raw message content followed by a newline
+# This preserves the original log format without additional formatting
+
+# === Rules ===
+if $programname == '@@APP_NAME@@' then {
+    action(
+        type="omfile"
+        file="/var/log/@@APP_NAME@@/@@APP_NAME@@.log"
+        template="DawgLog_raw"
+        FileCreateMode="0644"
+        DirCreateMode="0755"
+    )
+}
+# Route messages from the DawgLog program to a dedicated log file
+# Uses the raw message template to maintain original log formatting
+# The omfile action writes logs directly to the specified file path

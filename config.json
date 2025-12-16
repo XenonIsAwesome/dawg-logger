@@ -1,0 +1,5 @@
+{
+  "sink": "console",
+  "format": "text",
+  "app_name": "test"
+}
