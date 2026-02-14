@@ -3,6 +3,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <vector>
 #include <fmt/core.h>
 #include "config.hpp"
 #include "sinks/sink.hpp"
@@ -25,6 +26,10 @@ namespace DawgLog {
     */
    class Logger {
    public:
+    struct Target {
+        SinkPtr sink;
+        FormatterPtr formatter;
+    };
     /**
      * @brief Construct a new Logger instance
      *
@@ -34,7 +39,7 @@ namespace DawgLog {
      * @param fmt The formatter used to format log records
      * @param app_name Name of the application using this logger
      */
-    Logger(SinkPtr sink, FormatterPtr fmt, std::string app_name);
+    Logger(std::vector<Target> targets, std::string app_name);
 
     /** Deleted copy constructor - Logger is not copyable */
     Logger(const Logger &) = delete;
@@ -69,7 +74,12 @@ namespace DawgLog {
         msg = fmt::format(fmt_str, std::forward<Args>(args)...);
     #endif
         auto rec = Record{lvl, tag, src, this->app_name_, msg};
-        sink_->write(rec, formatter_->format(rec));
+        for (auto &target : targets_) {
+            if (!target.sink || !target.formatter) {
+                continue;
+            }
+            target.sink->write(rec, target.formatter->format(rec));
+        }
         return msg;
     }
 
@@ -116,6 +126,14 @@ namespace DawgLog {
     static void init(const Config &cfg, SinkPtr sink, FormatterPtr formatter);
 
     /**
+     * @brief Initialize the global logger with a set of sink/formatter targets
+     *
+     * @param cfg Configuration object containing logger settings
+     * @param targets Set of sink/formatter pairs to receive each log record
+     */
+    static void init(const Config &cfg, std::vector<Target> targets);
+
+    /**
      * @brief Get the global logger instance
      *
      * Returns a reference to the singleton logger instance. This should be used
@@ -143,9 +161,23 @@ namespace DawgLog {
      */
     void set_sink(SinkPtr sink);
 
+    /**
+     * @brief Replace all logging targets with a new set
+     *
+     * @param targets New sink/formatter targets to use
+     */
+    void set_targets(std::vector<Target> targets);
+
+    /**
+     * @brief Add a new sink/formatter target
+     *
+     * @param sink New sink to receive log records
+     * @param formatter Formatter used for this sink
+     */
+    void add_target(SinkPtr sink, FormatterPtr formatter);
+
    private:
-    SinkPtr sink_;
-    FormatterPtr formatter_;
+    std::vector<Target> targets_;
     std::mutex m_;
     std::string app_name_;
    };

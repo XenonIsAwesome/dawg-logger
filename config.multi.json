@@ -1,0 +1,7 @@
+{
+  "app_name": "MyApp",
+  "targets": [
+    { "sink": "syslog", "format": "json" },
+    { "sink": "console", "format": "text" }
+  ]
+}

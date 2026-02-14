@@ -1,5 +1,5 @@
 {
-  "sink": "console",
+  "sink": "syslog",
   "format": "text",
   "app_name": "test"
 }

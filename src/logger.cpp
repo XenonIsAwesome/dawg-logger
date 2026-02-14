@@ -28,35 +28,46 @@ SinkPtr make_sink(const SinkType type, const std::string& app_name) {
             return std::make_unique<ConsoleSink>(app_name);
     }
 }
+
+Logger::Target make_target(SinkType sink_type, FormatterType formatter_type, const std::string& app_name) {
+    return Logger::Target{make_sink(sink_type, app_name), make_formatter(formatter_type)};
+}
 }
 
-Logger::Logger(SinkPtr sink, FormatterPtr formatter, std::string app_name)
-    : sink_(std::move(sink)), formatter_(std::move(formatter)), app_name_(std::move(app_name)) {}
+Logger::Logger(std::vector<Target> targets, std::string app_name)
+    : targets_(std::move(targets)), app_name_(std::move(app_name)) {}
 
 void Logger::init(const Config& cfg) {
     init(cfg, make_formatter(cfg.format));
 }
 
 void Logger::init(const Config& cfg, FormatterPtr formatter) {
-    logger = std::make_unique<Logger>(make_sink(cfg.sink, cfg.app_name),
-                                      std::move(formatter),
-                                      cfg.app_name);
+    std::vector<Target> targets;
+    targets.emplace_back(Target{make_sink(cfg.sink, cfg.app_name), std::move(formatter)});
+    logger = std::make_unique<Logger>(std::move(targets), cfg.app_name);
 }
 
 void Logger::init(const Config& cfg, SinkPtr sink) {
-    logger = std::make_unique<Logger>(std::move(sink), make_formatter(cfg.format), cfg.app_name);
+    std::vector<Target> targets;
+    targets.emplace_back(Target{std::move(sink), make_formatter(cfg.format)});
+    logger = std::make_unique<Logger>(std::move(targets), cfg.app_name);
 }
 
 void Logger::init(const Config& cfg, SinkPtr sink, FormatterPtr formatter) {
-    logger = std::make_unique<Logger>(std::move(sink), std::move(formatter), cfg.app_name);
+    std::vector<Target> targets;
+    targets.emplace_back(Target{std::move(sink), std::move(formatter)});
+    logger = std::make_unique<Logger>(std::move(targets), cfg.app_name);
+}
+
+void Logger::init(const Config& cfg, std::vector<Target> targets) {
+    logger = std::make_unique<Logger>(std::move(targets), cfg.app_name);
 }
 
 Logger& Logger::instance() {
     if (!logger) {
-        logger = std::make_unique<Logger>(
-            make_sink(SinkType::CONSOLE, "DawgLog"),
-            make_formatter(FormatterType::TEXT),
-            "DawgLog");
+        std::vector<Target> targets;
+        targets.emplace_back(make_target(SinkType::CONSOLE, FormatterType::TEXT, "DawgLog"));
+        logger = std::make_unique<Logger>(std::move(targets), "DawgLog");
         WARNING("Logger not initialized. Defaulting to console sink and text format.");
     }
     return *logger;
@@ -64,10 +75,26 @@ Logger& Logger::instance() {
 
 void Logger::set_formatter(FormatterPtr fmt) {
     std::lock_guard<std::mutex> lock(m_);
-    formatter_ = std::move(fmt);
+    if (targets_.empty()) {
+        return;
+    }
+    targets_.front().formatter = std::move(fmt);
 }
 
 void Logger::set_sink(SinkPtr sink) {
     std::lock_guard<std::mutex> lock(m_);
-    sink_ = std::move(sink);
+    if (targets_.empty()) {
+        return;
+    }
+    targets_.front().sink = std::move(sink);
+}
+
+void Logger::set_targets(std::vector<Target> targets) {
+    std::lock_guard<std::mutex> lock(m_);
+    targets_ = std::move(targets);
+}
+
+void Logger::add_target(SinkPtr sink, FormatterPtr formatter) {
+    std::lock_guard<std::mutex> lock(m_);
+    targets_.push_back(Target{std::move(sink), std::move(formatter)});
 }

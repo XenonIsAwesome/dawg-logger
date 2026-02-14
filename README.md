@@ -89,6 +89,42 @@ DawgLogger is initialized from a JSON config file that defines:
 }
 ```
 
+### Multiple targets (sink + formatter pairs)
+
+You can send different formats to different sinks by defining `targets`:
+
+```json
+{
+  "app_name": "MyApp",
+  "targets": [
+    { "sink": "syslog", "format": "json" },
+    { "sink": "console", "format": "text" }
+  ]
+}
+```
+
+Then initialize the logger using these targets:
+
+```cpp
+#include <DawgLogger/logger.hpp>
+
+namespace dog = DawgLog;
+
+int main() {
+    dog::Config cfg{"config.json"};
+    std::vector<dog::Logger::Target> targets;
+    targets.emplace_back(dog::Logger::Target{
+        std::make_unique<dog::SyslogSink>(cfg.app_name),
+        std::make_unique<dog::JsonFormatter>()
+    });
+    targets.emplace_back(dog::Logger::Target{
+        std::make_unique<dog::ConsoleSink>(cfg.app_name),
+        std::make_unique<dog::TextFormatter>()
+    });
+    dog::Logger::init(cfg, std::move(targets));
+}
+```
+
 ---
 
 ## 📝 Rsyslog and Logrotate installation
