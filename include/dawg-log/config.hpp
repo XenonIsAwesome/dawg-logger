@@ -1,8 +1,11 @@
 #pragma once
 #include "sinks/sink.hpp"
 #include "formatters/formatter.hpp"
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 namespace DawgLog {
@@ -23,6 +26,11 @@ namespace DawgLog {
      */
     class Config {
     public:
+        struct TargetConfig {
+            SinkType sink{SinkType::CONSOLE};
+            FormatterType format{FormatterType::TEXT};
+            std::string file_path{"dawglog.log"};
+        };
         /**
          * @brief Logger sink type enumeration
          *
@@ -47,6 +55,8 @@ namespace DawgLog {
          * between different applications or services.
          */
         std::string app_name;
+        std::string file_path;
+        std::vector<TargetConfig> targets;
 
         /**
          * @brief Construct a Config object from JSON file
@@ -60,6 +70,26 @@ namespace DawgLog {
          * @param json_path Path to the JSON configuration file
          */
         explicit Config(const std::string &json_path) {
+            const auto resolve_path = [](const std::string &raw_path) {
+                std::string expanded_path = raw_path;
+                if (!raw_path.empty() && raw_path[0] == '~') {
+                    const char* home = std::getenv("HOME");
+                    if (home != nullptr) {
+                        if (raw_path.size() == 1) {
+                            expanded_path = home;
+                        } else if (raw_path[1] == '/') {
+                            expanded_path = std::string(home) + raw_path.substr(1);
+                        }
+                    }
+                }
+
+                const std::filesystem::path path{expanded_path};
+                if (path.is_absolute()) {
+                    return path.lexically_normal().string();
+                }
+                return path.lexically_normal().string();
+            };
+
             std::ifstream file(json_path);
             if (!file.is_open()) {
                 std::cerr << "Failed to open logger config file: " << json_path << std::endl;
@@ -68,6 +98,7 @@ namespace DawgLog {
                 sink = SinkType::CONSOLE;
                 format = FormatterType::TEXT;
                 app_name = "DawgLog";
+                file_path = "dawglog.log";
                 return;
             }
 
@@ -77,6 +108,20 @@ namespace DawgLog {
             sink = string_to_sink_type(j.value("sink", "console"));
             format = string_to_formatter_type(j.value("format", "text"));
             app_name = j.value("app_name", "DawgLog");
+            file_path = resolve_path(j.value("file_path", "dawglog.log"));
+
+            if (j.contains("targets") && j["targets"].is_array()) {
+                for (const auto &target : j["targets"]) {
+                    if (!target.is_object()) {
+                        continue;
+                    }
+                    TargetConfig cfg;
+                    cfg.sink = string_to_sink_type(target.value("sink", "console"));
+                    cfg.format = string_to_formatter_type(target.value("format", "text"));
+                    cfg.file_path = resolve_path(target.value("file_path", "dawglog.log"));
+                    targets.emplace_back(std::move(cfg));
+                }
+            }
         }
     };
 } // namespace DawgLog

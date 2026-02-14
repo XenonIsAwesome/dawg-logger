@@ -77,15 +77,17 @@ Include the logger:
 
 DawgLogger is initialized from a JSON config file that defines:
 - `app_name` – name of your application
-- `format` – output format (`text` or `json`)
-- `sink` – logging sink (`console` or `syslog`)
+- `format` – output format (`text` or `json`) (`file` is a sink, not a formatter)
+- `sink` – logging sink (`console`, `syslog`, or `file`)
+- `file_path` – file path for the `file` sink (default: `dawglog.log`, resolved relative to the config file)
 
 **Example config.json:**
 ```json
 {
   "app_name": "MyApp",
   "format": "text",
-  "sink": "console"
+  "sink": "file",
+  "file_path": "test.txt"
 }
 ```
 

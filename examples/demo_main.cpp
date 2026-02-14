@@ -1,14 +1,11 @@
 #include <dawg-log/logger.hpp>
-#include <dawg-log/sinks/console_sink.hpp>
-#include <dawg-log/sinks/syslog_sink.hpp>
-#include <dawg-log/formatters/json_formatter.hpp>
-#include <dawg-log/formatters/text_formatter.hpp>
-#include <vector>
+#include <filesystem>
+#include <string>
 
 namespace dog = DawgLog;
 
 int main(int argc, char** argv) {
-    dog::Config cfg{"config.multi.json"};
+    dog::Config cfg{"../config.multi.json"};
     dog::Logger::init(cfg);
 
     dog::TaggedLogger ingest("ingest");

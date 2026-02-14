@@ -1,7 +1,7 @@
 {
   "app_name": "MyApp",
   "targets": [
-    { "sink": "syslog", "format": "json" },
-    { "sink": "console", "format": "text" }
+    { "sink": "console", "format": "text" },
+    { "sink": "file", "format": "text", "file_path": "~/test.log" }
   ]
 }

@@ -5,7 +5,8 @@
 namespace DawgLog {
     enum class SinkType {
         CONSOLE,
-        SYSLOG
+        SYSLOG,
+        FILE
     };
 
     enum class FormatterType {

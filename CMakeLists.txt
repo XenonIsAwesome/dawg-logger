@@ -25,6 +25,7 @@ add_library(dawg-logger
         src/json_formatter.cpp
         src/console_sink.cpp
         src/syslog_sink.cpp
+        src/file_sink.cpp
         src/logger.cpp
         src/utils.cpp)
 
