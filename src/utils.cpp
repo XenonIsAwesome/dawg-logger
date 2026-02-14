@@ -38,11 +38,17 @@ const std::map<std::string, FormatterType>& DawgLog::get_formatter_type() {
 SinkType DawgLog::string_to_sink_type(const std::string& type) {
     const auto& mapping = get_sink_type();
     const auto it = mapping.find(type);
+    if (it == mapping.end()) {
+        return SinkType::CONSOLE;
+    }
     return it->second;
 }
 
 FormatterType DawgLog::string_to_formatter_type(const std::string& type) {
     const auto& mapping = get_formatter_type();
     const auto it = mapping.find(type);
+    if (it == mapping.end()) {
+        return FormatterType::TEXT;
+    }
     return it->second;
 }

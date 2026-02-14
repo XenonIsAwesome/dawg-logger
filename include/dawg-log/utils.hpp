@@ -51,8 +51,8 @@ namespace DawgLog {
      * @brief Converts a string representation to a SinkType enum value
      *
      * This function looks up the provided string in the sink type mapping and returns
-     * the corresponding SinkType enum value. If the string is not found, it will result
-     * in undefined behavior as there's no error handling for invalid input.
+     * the corresponding SinkType enum value. If the string is not found, it returns
+     * SinkType::CONSOLE.
      *
      * @param type The string representation of the sink type to convert
      * @return SinkType The corresponding SinkType enum value
@@ -63,8 +63,8 @@ namespace DawgLog {
      * @brief Converts a string representation to a FormatterType enum value
      *
      * This function looks up the provided string in the formatter type mapping and returns
-     * the corresponding FormatterType enum value. If the string is not found, it will result
-     * in undefined behavior as there's no error handling for invalid input.
+     * the corresponding FormatterType enum value. If the string is not found, it returns
+     * FormatterType::TEXT.
      *
      * @param type The string representation of the formatter type to convert
      * @return FormatterType The corresponding FormatterType enum value
