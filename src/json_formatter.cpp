@@ -1,4 +1,5 @@
 #include "dawg-log/formatters/json_formatter.hpp"
+
 #include <nlohmann/json.hpp>
 
 using namespace DawgLog;

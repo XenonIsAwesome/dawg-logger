@@ -1,10 +1,10 @@
 #include "dawg-log/sinks/file_sink.hpp"
+
 #include <iostream>
 
 using namespace DawgLog;
 
-FileSink::FileSink(std::string path)
-    : path_(std::move(path)), out_(path_, std::ios::app) {
+FileSink::FileSink(std::string path) : path_(std::move(path)), out_(path_, std::ios::app) {
     if (!out_.is_open()) {
         std::cerr << "Failed to open log file: " << path_ << std::endl;
     }

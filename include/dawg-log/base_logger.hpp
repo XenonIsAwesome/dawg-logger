@@ -19,15 +19,31 @@
 #    include <prometheus/summary.h>
 #endif
 
-namespace DawgLog {
 #if LOGGERLIB_HAS_METRICS
 static prometheus::Histogram::BucketBoundaries DAWGLOG_DEFAULT_BUCKETS =
-    {0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10};
+{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10};
 
 static prometheus::Summary::Quantiles DAWGLOG_DEFAULT_QUANTILES = {{0.5, 0.05},
                                                                    {0.9, 0.01},
                                                                    {0.99, 0.001}};
 #endif
+
+namespace DawgLog {
+/**
+ * @brief Main logging class responsible for managing log output and formatting
+ *
+ * The Logger class is the primary interface for generating log messages in the
+ * DawgLog library. It manages a sink (where logs are written) and a formatter
+ * (how logs are formatted), and provides methods to generate log records at
+ * various severity levels.
+ *
+ * Logger instances are thread-safe and can be safely used from multiple threads.
+ * The class follows a singleton pattern with the `instance()` method for accessing
+ * the global logger instance.
+ */
+class Logger {
+public:
+
 
 /**
  * @brief Main logging class responsible for managing log output and formatting
@@ -322,3 +338,4 @@ private:
 #endif
 };
 }  // namespace DawgLog
+

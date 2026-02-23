@@ -1,4 +1,5 @@
 #include "dawg-log/sinks/console_sink.hpp"
+
 #include <iostream>
 
 using namespace DawgLog;

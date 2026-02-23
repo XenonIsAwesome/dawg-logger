@@ -12,14 +12,14 @@ find_package(nlohmann_json QUIET)
 
 include(FetchContent)
 
-if(NOT nlohmann_json_FOUND)
-  FetchContent_Declare(
-          nlohmann_json
-          GIT_REPOSITORY "https://github.com/nlohmann/json"
-          GIT_TAG v3.12.0
-  )
-  FetchContent_MakeAvailable(nlohmann_json)
-endif()
+if (NOT nlohmann_json_FOUND)
+    FetchContent_Declare(
+            nlohmann_json
+            GIT_REPOSITORY "https://github.com/nlohmann/json"
+            GIT_TAG v3.12.0
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif ()
 
 set(LOGGERLIB_LINK_DEPENDS "")
 list(APPEND LOGGERLIB_LINK_DEPENDS fmt::fmt)
@@ -58,8 +58,7 @@ target_include_directories(dawg-logger
 message(STATUS "Linking libraries: ${LOGGERLIB_LINK_DEPENDS}")
 target_link_libraries(dawg-logger PUBLIC ${LOGGERLIB_LINK_DEPENDS})
 
-
-if(LOGGERLIB_ENABLE_METRICS AND UNIX)
+if(LOGGERLIB_ENABLE_METRICS)
   target_compile_definitions(dawg-logger PUBLIC LOGGERLIB_HAS_METRICS=1)
 endif()
 
@@ -72,13 +71,13 @@ target_link_libraries(logger_demo PRIVATE dawg-logger)
 
 option(DAWGLOG_BUILD_TESTS "Build dawg-logger tests" ON)
 include(CTest)
-if(DAWGLOG_BUILD_TESTS)
-  add_executable(dawglog_basic_tests tests/basic_tests.cpp)
-  target_link_libraries(dawglog_basic_tests PRIVATE dawg-logger)
-  add_test(NAME dawglog_basic_tests COMMAND dawglog_basic_tests)
-  set_tests_properties(dawglog_basic_tests PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
+if (DAWGLOG_BUILD_TESTS)
+    add_executable(dawglog_basic_tests tests/basic_tests.cpp)
+    target_link_libraries(dawglog_basic_tests PRIVATE dawg-logger)
+    add_test(NAME dawglog_basic_tests COMMAND dawglog_basic_tests)
+    set_tests_properties(dawglog_basic_tests PROPERTIES
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif ()
 
 ######################################################################################
 ###                               library installation                             ###
