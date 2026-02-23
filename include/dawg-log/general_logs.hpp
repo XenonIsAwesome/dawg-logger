@@ -39,6 +39,10 @@ namespace DawgLog {
 
 #define CRITICAL(...) critical(LOG_SRC, __VA_ARGS__)
 
+#define ADD_METRIC(...) DawgLog::Logger::instance().add_metric(__VA_ARGS__)
+
+#define METRIC(...) DawgLog::Logger::instance().report_metric(__VA_ARGS__)
+
 #define THROW_ERROR(...) throw_error<std::runtime_error>(LOG_SRC, __VA_ARGS__)
 
 #define TAG_DEBUG(logger, ...) (logger).debug(LOG_SRC, __VA_ARGS__)

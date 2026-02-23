@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(dawg-logger LANGUAGES CXX)
 
 option(LOGGERLIB_ENABLE_SYSLOG "Build with syslog support" ON)
+option(LOGGERLIB_ENABLE_METRICS "Build with metric exposing support (requires prometheus-cpp)" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,6 +21,25 @@ if(NOT nlohmann_json_FOUND)
   FetchContent_MakeAvailable(nlohmann_json)
 endif()
 
+set(LOGGERLIB_LINK_DEPENDS "")
+list(APPEND LOGGERLIB_LINK_DEPENDS fmt::fmt)
+list(APPEND LOGGERLIB_LINK_DEPENDS nlohmann_json::nlohmann_json)
+
+if(LOGGERLIB_ENABLE_METRICS)
+  find_package(prometheus-cpp QUIET)
+  if (NOT prometheus-cpp_FOUND)
+    FetchContent_Declare(
+            prometheus-cpp
+            GIT_REPOSITORY "https://github.com/jupp0r/prometheus-cpp"
+            GIT_TAG v1.3.0
+    )
+    FetchContent_MakeAvailable(prometheus-cpp)
+  endif()
+
+  list(APPEND LOGGERLIB_LINK_DEPENDS prometheus-cpp::push)
+  list(APPEND LOGGERLIB_LINK_DEPENDS prometheus-cpp::pull)
+endif()
+
 add_library(dawg-logger
         src/text_formatter.cpp
         src/json_formatter.cpp
@@ -35,12 +55,16 @@ target_include_directories(dawg-logger
         $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(dawg-logger PUBLIC fmt::fmt nlohmann_json::nlohmann_json)
+message(STATUS "Linking libraries: ${LOGGERLIB_LINK_DEPENDS}")
+target_link_libraries(dawg-logger PUBLIC ${LOGGERLIB_LINK_DEPENDS})
 
-if(LOGGERLIB_ENABLE_SYSLOG)
-  if(UNIX)
-    target_compile_definitions(dawg-logger PUBLIC LOGGERLIB_HAS_SYSLOG=1)
-  endif()
+
+if(LOGGERLIB_ENABLE_METRICS AND UNIX)
+  target_compile_definitions(dawg-logger PUBLIC LOGGERLIB_HAS_METRICS=1)
+endif()
+
+if(LOGGERLIB_ENABLE_SYSLOG AND UNIX)
+  target_compile_definitions(dawg-logger PUBLIC LOGGERLIB_HAS_SYSLOG=1)
 endif()
 
 add_executable(logger_demo examples/demo_main.cpp)

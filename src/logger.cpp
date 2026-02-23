@@ -1,11 +1,15 @@
 #include "dawg-log/base_logger.hpp"
 #include "dawg-log/concepts.hpp"
+#include "dawg-log/formatters/json_formatter.hpp"
+#include "dawg-log/formatters/text_formatter.hpp"
 #include "dawg-log/general_logs.hpp"
 #include "dawg-log/sinks/console_sink.hpp"
-#include "dawg-log/sinks/syslog_sink.hpp"
 #include "dawg-log/sinks/file_sink.hpp"
-#include "dawg-log/formatters/text_formatter.hpp"
-#include "dawg-log/formatters/json_formatter.hpp"
+#include "dawg-log/sinks/syslog_sink.hpp"
+
+#if LOGGERLIB_HAS_METRICS
+#include <prometheus/registry.h>
+#endif
 
 using namespace DawgLog;
 
@@ -36,7 +40,8 @@ Logger::Target make_target(SinkType sink_type,
                            FormatterType formatter_type,
                            const std::string& app_name,
                            const std::string& file_path) {
-    return Logger::Target{make_sink(sink_type, app_name, file_path), make_formatter(formatter_type)};
+    return Logger::Target{make_sink(sink_type, app_name, file_path),
+                          make_formatter(formatter_type)};
 }
 
 std::vector<Logger::Target> make_targets_from_config(const Config& cfg) {
@@ -44,17 +49,22 @@ std::vector<Logger::Target> make_targets_from_config(const Config& cfg) {
     if (!cfg.targets.empty()) {
         targets.reserve(cfg.targets.size());
         for (const auto& target : cfg.targets) {
-            targets.emplace_back(make_target(target.sink, target.format, cfg.app_name, target.file_path));
+            targets.emplace_back(
+                make_target(target.sink, target.format, cfg.app_name, target.file_path));
         }
         return targets;
     }
     targets.emplace_back(make_target(cfg.sink, cfg.format, cfg.app_name, cfg.file_path));
     return targets;
 }
-}
+}  // namespace
 
-Logger::Logger(std::vector<Target> targets, std::string app_name)
-    : targets_(std::move(targets)), app_name_(std::move(app_name)) {}
+Logger::Logger(std::vector<Target> targets, std::string app_name) :
+    targets_(std::move(targets)), app_name_(std::move(app_name))
+#if LOGGERLIB_HAS_METRICS
+    , _prometheus_registry(std::make_shared<prometheus::Registry>())
+#endif
+    {}
 
 void Logger::init(const Config& cfg) {
     logger = std::make_unique<Logger>(make_targets_from_config(cfg), cfg.app_name);
@@ -62,7 +72,8 @@ void Logger::init(const Config& cfg) {
 
 void Logger::init(const Config& cfg, FormatterPtr formatter) {
     std::vector<Target> targets;
-    targets.emplace_back(Target{make_sink(cfg.sink, cfg.app_name, cfg.file_path), std::move(formatter)});
+    targets.emplace_back(
+        Target{make_sink(cfg.sink, cfg.app_name, cfg.file_path), std::move(formatter)});
     logger = std::make_unique<Logger>(std::move(targets), cfg.app_name);
 }
 
@@ -85,7 +96,8 @@ void Logger::init(const Config& cfg, std::vector<Target> targets) {
 Logger& Logger::instance() {
     if (!logger) {
         std::vector<Target> targets;
-        targets.emplace_back(make_target(SinkType::CONSOLE, FormatterType::TEXT, "DawgLog", "dawglog.log"));
+        targets.emplace_back(
+            make_target(SinkType::CONSOLE, FormatterType::TEXT, "DawgLog", "dawglog.log"));
         logger = std::make_unique<Logger>(std::move(targets), "DawgLog");
         WARNING("Logger not initialized. Defaulting to console sink and text format.");
     }
@@ -117,3 +129,13 @@ void Logger::add_target(SinkPtr sink, FormatterPtr formatter) {
     std::lock_guard<std::mutex> lock(m_);
     targets_.push_back(Target{std::move(sink), std::move(formatter)});
 }
+
+#if LOGGERLIB_HAS_METRICS
+std::shared_ptr<prometheus::Registry> Logger::registry() {
+    return _prometheus_registry;
+}
+
+void Logger::add_metric(const std::string& name, prometheus::MetricType type) {
+    add_metric(name, "", type);
+}
+#endif
