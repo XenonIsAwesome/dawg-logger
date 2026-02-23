@@ -210,9 +210,24 @@ public:
      */
     std::shared_ptr<prometheus::Registry> registry();
 
-    // type: "counter" | "gauge" | "histogram" | "summary"
-    // For histogram, provide bucket boundaries (optional, has sane default)
-    // For summary, provide quantiles (optional, has sane default)
+    /**
+     * @brief Register a new metric family with the logger's Prometheus registry
+     *
+     * Creates and registers a named metric family of the specified type. For
+     * Histogram and Summary types, default bucket boundaries and quantiles are
+     * used (@ref DAWGLOG_DEFAULT_BUCKETS and @ref DAWGLOG_DEFAULT_QUANTILES).
+     *
+     * @param name   Unique metric name (must be a valid Prometheus metric name)
+     * @param help   Human-readable description shown in the /metrics output
+     * @param type   The Prometheus metric type (Counter, Gauge, Histogram, Summary)
+     * @param buckets Bucket boundaries for Histogram metrics (ignored for other types)
+     * @param quantiles Quantile/error pairs for Summary metrics (ignored for other types)
+     *
+     * @throws std::runtime_error      If a metric with the same name is already registered
+     * @throws std::invalid_argument   If type is MetricType::Untyped or MetricType::Info
+     *
+     * @note This method is thread-safe.
+     */
     void add_metric(const std::string& name,
                     const std::string& help,
                     prometheus::MetricType type,
@@ -256,8 +271,54 @@ public:
         }
     }
 
+    /**
+     * @brief Register a new metric family with no help text
+     *
+     * Convenience overload that registers a metric with an empty help string.
+     * Equivalent to calling `add_metric(name, "", type)`.
+     *
+     * @param name  Unique metric name (must be a valid Prometheus metric name)
+     * @param type  The Prometheus metric type (Counter, Gauge, Histogram, Summary)
+     *
+     * @throws std::runtime_error      If a metric with the same name is already registered
+     * @throws std::invalid_argument   If type is MetricType::Untyped or MetricType::Info
+     *
+     * @note This method is thread-safe.
+     * @see add_metric(const std::string&, const std::string&, prometheus::MetricType,
+     *                 prometheus::Histogram::BucketBoundaries, prometheus::Summary::Quantiles)
+     */
     void add_metric(const std::string& name, prometheus::MetricType type);
 
+    /**
+     * @brief Record a measurement or update a previously registered metric
+     *
+     * Applies @p action to the metric identified by @p name, optionally scoped to
+     * a specific label set. The valid actions depend on the metric type:
+     *
+     * | Type      | Supported Actions                        |
+     * |-----------|------------------------------------------|
+     * | Counter   | `Increment`                              |
+     * | Gauge     | `Increment`, `Decrement`, `Set`          |
+     * | Histogram | `Observe`                                |
+     * | Summary   | `Observe`                                |
+     *
+     * @param name   Name of a previously registered metric
+     * @param action The operation to perform on the metric
+     * @param value  Numeric value to use with the action (default: 1.0)
+     * @param labels Optional label key-value pairs to scope this measurement
+     *
+     * @throws std::runtime_error      If @p name has not been registered via add_metric()
+     * @throws std::invalid_argument   If @p action is incompatible with the metric's type
+     *
+     * @note This method is thread-safe.
+     *
+     * @par Example
+     * @code
+     * logger.add_metric("http_requests_total", prometheus::MetricType::Counter);
+     * logger.report_metric("http_requests_total", MetricAction::Increment, 1.0,
+     *                      {{"method", "GET"}, {"status", "200"}});
+     * @endcode
+     */
     void report_metric(const std::string& name,
                        MetricAction action,
                        double value = 1.0,
