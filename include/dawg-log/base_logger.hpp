@@ -1,31 +1,32 @@
 #pragma once
+#include "config.hpp"
+#include "formatters/formatter.hpp"
+#include "record.hpp"
+#include "sinks/sink.hpp"
+#include "src_location.hpp"
+
+#include <fmt/core.h>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
-#include <fmt/core.h>
-#include "config.hpp"
-#include "sinks/sink.hpp"
-#include "formatters/formatter.hpp"
-#include "record.hpp"
-#include "src_location.hpp"
 
 namespace DawgLog {
-   /**
-    * @brief Main logging class responsible for managing log output and formatting
-    *
-    * The Logger class is the primary interface for generating log messages in the
-    * DawgLog library. It manages a sink (where logs are written) and a formatter
-    * (how logs are formatted), and provides methods to generate log records at
-    * various severity levels.
-    *
-    * Logger instances are thread-safe and can be safely used from multiple threads.
-    * The class follows a singleton pattern with the `instance()` method for accessing
-    * the global logger instance.
-    */
-   class Logger {
-   public:
+/**
+ * @brief Main logging class responsible for managing log output and formatting
+ *
+ * The Logger class is the primary interface for generating log messages in the
+ * DawgLog library. It manages a sink (where logs are written) and a formatter
+ * (how logs are formatted), and provides methods to generate log records at
+ * various severity levels.
+ *
+ * Logger instances are thread-safe and can be safely used from multiple threads.
+ * The class follows a singleton pattern with the `instance()` method for accessing
+ * the global logger instance.
+ */
+class Logger {
+public:
     struct Target {
         SinkPtr sink;
         FormatterPtr formatter;
@@ -42,10 +43,10 @@ namespace DawgLog {
     Logger(std::vector<Target> targets, std::string app_name);
 
     /** Deleted copy constructor - Logger is not copyable */
-    Logger(const Logger &) = delete;
+    Logger(const Logger&) = delete;
 
     /** Deleted assignment operator - Logger is not copyable */
-    Logger &operator=(const Logger &) = delete;
+    Logger& operator=(const Logger&) = delete;
 
     /**
      * @brief Log a message at the specified level with formatting support
@@ -64,17 +65,20 @@ namespace DawgLog {
      * @return formatted string (the message)
      */
     template<typename... Args>
-    std::string log(LogLevel lvl, std::string_view tag, const SourceLocation &src,
-             fmt::string_view fmt_str, Args &&... args) {
+    std::string log(LogLevel lvl,
+                    std::string_view tag,
+                    const SourceLocation& src,
+                    fmt::string_view fmt_str,
+                    Args&&... args) {
         std::lock_guard<std::mutex> lock(m_);
         std::string msg;
-    #if FMT_VERSION >= 80000
-                 msg = fmt::format(fmt::runtime(fmt_str), std::forward<Args>(args)...);
-    #else
+#if FMT_VERSION >= 80000
+        msg = fmt::format(fmt::runtime(fmt_str), std::forward<Args>(args)...);
+#else
         msg = fmt::format(fmt_str, std::forward<Args>(args)...);
-    #endif
+#endif
         auto rec = Record{lvl, tag, src, this->app_name_, msg};
-        for (auto &target : targets_) {
+        for (auto& target : targets_) {
             if (!target.sink || !target.formatter) {
                 continue;
             }
@@ -91,7 +95,7 @@ namespace DawgLog {
      *
      * @param cfg Configuration object containing logger settings
      */
-    static void init(const Config &cfg);
+    static void init(const Config& cfg);
 
     /**
      * @brief Initialize the global logger with custom formatter
@@ -101,7 +105,7 @@ namespace DawgLog {
      * @param cfg Configuration object containing logger settings
      * @param formatter Custom formatter to use for log formatting
      */
-    static void init(const Config &cfg, FormatterPtr formatter);
+    static void init(const Config& cfg, FormatterPtr formatter);
 
     /**
      * @brief Initialize the global logger with custom sink
@@ -111,7 +115,7 @@ namespace DawgLog {
      * @param cfg Configuration object containing logger settings
      * @param sink Custom sink to use for log output
      */
-    static void init(const Config &cfg, SinkPtr sink);
+    static void init(const Config& cfg, SinkPtr sink);
 
     /**
      * @brief Initialize the global logger with custom sink and formatter
@@ -123,7 +127,7 @@ namespace DawgLog {
      * @param sink Custom sink to use for log output
      * @param formatter Custom formatter to use for log formatting
      */
-    static void init(const Config &cfg, SinkPtr sink, FormatterPtr formatter);
+    static void init(const Config& cfg, SinkPtr sink, FormatterPtr formatter);
 
     /**
      * @brief Initialize the global logger with a set of sink/formatter targets
@@ -131,7 +135,7 @@ namespace DawgLog {
      * @param cfg Configuration object containing logger settings
      * @param targets Set of sink/formatter pairs to receive each log record
      */
-    static void init(const Config &cfg, std::vector<Target> targets);
+    static void init(const Config& cfg, std::vector<Target> targets);
 
     /**
      * @brief Get the global logger instance
@@ -141,7 +145,7 @@ namespace DawgLog {
      *
      * @return Reference to the global Logger instance
      */
-    static Logger &instance();
+    static Logger& instance();
 
     /**
      * @brief Set a new formatter for this logger
@@ -176,9 +180,9 @@ namespace DawgLog {
      */
     void add_target(SinkPtr sink, FormatterPtr formatter);
 
-   private:
+private:
     std::vector<Target> targets_;
     std::mutex m_;
     std::string app_name_;
-   };
-} // namespace DawgLog
+};
+}  // namespace DawgLog

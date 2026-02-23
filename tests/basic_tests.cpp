@@ -1,6 +1,7 @@
-#include "dawg-log/logger.hpp"
 #include "dawg-log/config.hpp"
+#include "dawg-log/logger.hpp"
 #include "dawg-log/tagged_logger.hpp"
+
 #include <cassert>
 
 using namespace DawgLog;

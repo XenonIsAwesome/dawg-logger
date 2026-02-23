@@ -1,31 +1,40 @@
 #pragma once
 
-#include <stdexcept>
-#include <fmt/core.h>
 #include "base_logger.hpp"
 #include "concepts.hpp"
 
+#include <fmt/core.h>
+#include <stdexcept>
+
 namespace DawgLog {
-   /**
-    * @brief Log a message with general tag for all type of logs
-    * @tparam Args Variadic template parameters for formatting arguments
-    * @param src Source location information for the log call
-    * @param fmt_str Format string for the log message
-    * @param args Arguments to format into the message
-    */
-#define X(name, general, str, syslog) \
-    template <typename... Args> \
+/**
+ * @brief Log a message with general tag for all type of logs
+ * @tparam Args Variadic template parameters for formatting arguments
+ * @param src Source location information for the log call
+ * @param fmt_str Format string for the log message
+ * @param args Arguments to format into the message
+ */
+#define X(name, general, str, syslog)                                                       \
+    template<typename... Args>                                                              \
     static void name(const SourceLocation& src, fmt::string_view fmt_str, Args&&... args) { \
-        Logger::instance().log(LogLevel::name, "General", src, fmt_str, std::forward<Args>(args)...); \
+        Logger::instance().log(LogLevel::name,                                              \
+                               "General",                                                   \
+                               src,                                                         \
+                               fmt_str,                                                     \
+                               std::forward<Args>(args)...);                                \
     }
-        LOG_LEVELS_XMACRO
+LOG_LEVELS_XMACRO
 #undef X
 
-    template<ExceptionType E, typename... Args>
-    static void throw_error(const SourceLocation& src, fmt::string_view fmt_str, Args&&... args) {
-        auto error_msg = Logger::instance().log(LogLevel::error, "General", src, fmt_str, std::forward<Args>(args)...);
-        throw E{error_msg};
-    }
+template<ExceptionType E, typename... Args>
+static void throw_error(const SourceLocation& src, fmt::string_view fmt_str, Args&&... args) {
+    auto error_msg = Logger::instance().log(LogLevel::error,
+                                            "General",
+                                            src,
+                                            fmt_str,
+                                            std::forward<Args>(args)...);
+    throw E{error_msg};
+}
 
 #define DEBUG(...) debug(LOG_SRC, __VA_ARGS__)
 
@@ -55,4 +64,4 @@ namespace DawgLog {
 
 #define TAG_THROW_ERROR(logger, ...) (logger).throw_error<std::runtime_error>(LOG_SRC, __VA_ARGS__)
 
-} // namespace DawgLog
+}  // namespace DawgLog

@@ -1,4 +1,5 @@
 #include "dawg-log/utils.hpp"
+
 #include <array>
 #include <chrono>
 #include <ctime>
@@ -22,19 +23,15 @@ std::string DawgLog::make_timestamp() {
 }
 
 const std::map<std::string, SinkType>& DawgLog::get_sink_type() {
-    static const std::map<std::string, SinkType> mapping = {
-        {"console", SinkType::CONSOLE},
-        {"syslog", SinkType::SYSLOG},
-        {"file", SinkType::FILE}
-    };
+    static const std::map<std::string, SinkType> mapping = {{"console", SinkType::CONSOLE},
+                                                            {"syslog", SinkType::SYSLOG},
+                                                            {"file", SinkType::FILE}};
     return mapping;
 }
 
 const std::map<std::string, FormatterType>& DawgLog::get_formatter_type() {
-    static const std::map<std::string, FormatterType> mapping = {
-        {"text", FormatterType::TEXT},
-        {"json", FormatterType::JSON}
-    };
+    static const std::map<std::string, FormatterType> mapping = {{"text", FormatterType::TEXT},
+                                                                 {"json", FormatterType::JSON}};
     return mapping;
 }
 
@@ -52,7 +49,8 @@ FormatterType DawgLog::string_to_formatter_type(const std::string& type) {
     const auto& mapping = get_formatter_type();
     const auto it = mapping.find(type);
     if (it == mapping.end()) {
-        std::cerr << "Unknown formatter type '" << type << "'. Falling back to 'text'." << std::endl;
+        std::cerr << "Unknown formatter type '" << type << "'. Falling back to 'text'."
+                  << std::endl;
         return FormatterType::TEXT;
     }
     return it->second;

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <exception>
 #include <concepts>
+#include <exception>
 #include <type_traits>
 
 namespace DawgLog {
 
-template <typename E>
+template<typename E>
 concept ExceptionType = std::is_base_of_v<std::exception, E>;
 
 }

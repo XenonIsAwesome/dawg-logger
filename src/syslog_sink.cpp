@@ -1,13 +1,12 @@
 #include "dawg-log/sinks/syslog_sink.hpp"
 
 #ifdef LOGGERLIB_HAS_SYSLOG
-#include <syslog.h>
+#    include <syslog.h>
 #endif
 
 using namespace DawgLog;
 
-SyslogSink::SyslogSink(std::string app_name)
-    : app_(std::move(app_name)) {
+SyslogSink::SyslogSink(std::string app_name) : app_(std::move(app_name)) {
     openlog(app_.c_str(), LOG_PID | LOG_NDELAY, LOG_USER);
 }
 
